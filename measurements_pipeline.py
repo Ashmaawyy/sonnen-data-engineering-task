@@ -1,4 +1,4 @@
-from pandas import read_csv, DataFrame, to_datetime, to_numeric
+from pandas import read_csv, DataFrame, to_datetime, to_numeric, concat
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 import time
@@ -46,6 +46,16 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
 
         # Task #7: Add a flag column to indicate where direct_consumption is greater than zero
         df['direct_consumption_flag'] = df['direct_consumption'] > 0
+        
+        # Task #8: Calculate total grid_purchase and grid_feedin per hour
+        df['hour'] = df.index.hour
+        hourly_totals = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
+        hourly_totals.columns = [col +'_total' for col in hourly_totals.columns]
+        hourly_totals = df['hour'].map(hourly_totals.to_dict())
+        df = concat([df, hourly_totals], axis=1)
+        
+        # Task #9: Identify the hour with the highest grid_feedin of the day
+        df['max_grid_feedin_hour'] = df.groupby(df.index.date)['grid_feedin'].transform(lambda x: x == x.max())
         
         return df
     except Exception as e:
