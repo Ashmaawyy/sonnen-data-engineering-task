@@ -10,10 +10,13 @@ def load_dataset(filename: str, delimiter: str = ';') -> DataFrame:
     try:
         df = read_csv(filename, delimiter=delimiter)
         print(f"✅ Loaded dataset with {df.shape[0]} rows and {df.shape[1]} columns.")
+
         return df
+    
     except FileNotFoundError:
         print("❌ File not found")
         return DataFrame()
+    
     except Exception as e:
         print(f"❌ An error occurred while loading dataset: {str(e)}")
         return DataFrame()
@@ -47,7 +50,9 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
 
         # Task #7: Add a flag column to indicate where direct_consumption is greater than zero
         df['direct_consumption_flag'] = df['direct_consumption'] > 0
+
         return df
+    
     except Exception as e:
         print(f"❌ An error occurred while cleaning: {str(e)}")
         return df
@@ -84,6 +89,7 @@ def export_dataset(df: DataFrame, filename: str, delimiter: str = ',') -> None:
             return
         df.to_csv(filename, sep=delimiter, index=True, encoding='utf-8')
         print(f"✅ Exported dataset with {df.shape[0]} rows and {df.shape[1]} columns.")
+
     except Exception as e:
         print(f"❌ An error occurred while exporting: {str(e)}")
 
@@ -104,6 +110,7 @@ def add_hour_metrics_job():
     if measurements_data.empty:
         print("⚠️ Skipping hour metrics: No data available.")
         return
+    
     measurements_data = add_hour_metrics(measurements_data)
 
 def export_dataset_job():
@@ -111,6 +118,7 @@ def export_dataset_job():
     if measurements_data.empty:
         print("⚠️ Skipping export: No data available.")
         return
+    
     export_dataset(measurements_data, 'cleaned_measurements.csv', ',')
 
 scheduler_instance = None
