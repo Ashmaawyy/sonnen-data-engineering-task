@@ -1,66 +1,90 @@
-# Measurements Data Pipeline
+# 📊 Measurements Data Pipeline
 
-## 📌 Overview
-This project processes and transforms battery measurement data, cleaning and enriching it for further analysis. The pipeline:
-1. Loads raw measurement data from a CSV file.
-2. Cleans and processes the dataset.
-3. Aggregates `grid_purchase` and `grid_feedin` per hour.
-4. Identifies the hour with the highest `grid_feedin` of the day.
-5. Exports the cleaned dataset to a new CSV file.
-6. Runs on a scheduled interval using `APScheduler`.
-7. Can be containerized and executed in a Docker environment.
+## Overview  
+This project is a **data processing pipeline** that:
+- Loads, cleans, and processes energy measurement data.
+- Aggregates hourly totals for `grid_purchase` and `grid_feedin`.
+- Identifies the **hour with the highest** `grid_feedin` and `grid_purchase` of the day.
+- Uses **logging** for execution tracking.
+- Includes **unit tests** to validate processing.
+- Runs as a **Docker container** for easy deployment.
 
-## 🚀 Setup & Usage
+---
 
-### 1️⃣ Install Dependencies (Without Docker)
+## 📂 Project Structure  
+```
+├── measurements_pipeline.py   # Main processing script
+├── pipeline_unit_tests.py     # Unit tests for the pipeline
+├── requirements.txt           # Python dependencies
+├── Dockerfile                 # Docker container setup
+├── pipeline.log               # Execution logs
+```
+
+---
+
+## 🚀 Running the Pipeline  
+
+### **1️⃣ Install Dependencies**  
+Ensure Python is installed, then run:
 ```sh
 pip install -r requirements.txt
 ```
 
-### 2️⃣ Run the Pipeline (Without Docker)
+### **2️⃣ Run the Pipeline Locally**  
 ```sh
 python measurements_pipeline.py
 ```
+This starts the scheduler and processes the data **every 5 minutes**.
 
-### 3️⃣ Build and Run with Docker
+---
 
-#### Build the Docker Image
+## 🐳 Running with Docker  
+
+### **1️⃣ Build the Docker Image**
 ```sh
 docker build -t measurements_pipeline .
 ```
 
-#### Run the Container
+### **2️⃣ Run the Container**
 ```sh
 docker run -d --name measurements_container measurements_pipeline
 ```
+- The pipeline will run **inside the container**.
+- To check logs:
+  ```sh
+  docker logs -f measurements_container
+  ```
 
-#### Check Logs
+### **3️⃣ Stop & Remove the Container**
 ```sh
-docker logs -f measurements_container
+docker stop measurements_container
+docker rm measurements_container
 ```
-
-#### Stop and Remove the Container
-```sh
-docker stop measurements_container && docker rm measurements_container
-```
-
-## 📂 Project Structure
-```
-📦 measurements_pipeline
- ┣ 📜 measurements_pipeline.py    # Main pipeline script
- ┣ 📜 Dockerfile                  # Docker configuration
- ┣ 📜 requirements.txt             # Python dependencies
- ┣ 📜 README.md                    # Documentation
-```
-
-## 📊 Output
-The cleaned dataset is saved as `cleaned_measurements.csv` in the working directory.
-
-## 🤝 Contributions
-Feel free to open an issue or submit a pull request for improvements.
-
-## 📜 License
-This project is open-source and available under the MIT License.
 
 ---
-### ✨ Happy Coding! 🚀
+
+## ✅ Running Unit Tests  
+To validate the processing pipeline, run:
+```sh
+python -m unittest pipeline_unit_tests.py
+```
+Tests check:
+- **Dataset loading**
+- **Cleaning process**
+- **Hourly aggregation**
+- **Export functionality**
+
+---
+
+## 📜 Logging  
+- Execution logs are saved in **`pipeline.log`**.
+- Logs include **errors, warnings, and execution steps**.
+
+---
+
+## ⚠️ Notes  
+- If running with **Docker**, ensure your dataset is inside the container.
+- Modify `measurements_pipeline.py` if you need different scheduling intervals.
+
+---
+🚀 **Now you're ready to process data efficiently!** 🚀  
