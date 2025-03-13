@@ -65,9 +65,8 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
         
         hourly_totals_cache = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
         hourly_totals_cache.columns = [col + '_total' for col in hourly_totals_cache.columns]
-        hourly_totals_cache = hourly_totals_cache.reset_index(drop=True)
         
-        df = df.merge(hourly_totals_cache, left_on='hour', right_index=True, how='left')
+        df = df.join(hourly_totals_cache, on='hour', how='left')
 
         # Identify the hour with the maximum grid purchase and grid feed-in
         df['max_grid_purchase_hour'] = df.groupby(df.index.floor('D'))['grid_purchase'].transform(lambda x: x == x.max())
