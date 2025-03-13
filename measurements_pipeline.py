@@ -83,7 +83,7 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
 
         # Task #5: Drop rows where timestamp is missing before setting as index
         df = df.dropna(subset=['timestamp']).set_index('timestamp')
-        df = df[~df.index.duplicated(keep='first')]  # Remove duplicate timestamps
+        #df = df[~df.index.duplicated(keep='first')]  # Remove duplicate timestamps
 
         # Task #6: Replace null values in selected columns with 0
         df.loc[:, ['grid_purchase', 'grid_feedin']] = df[['grid_purchase', 'grid_feedin']].fillna(0).copy()
