@@ -18,7 +18,7 @@ def load_dataset(filename: str, delimiter: str = ';') -> DataFrame:
         print(f"❌ An error occurred while loading dataset: {str(e)}")
         return DataFrame()
 
-# Second Stage: Cleaning the dataset and adding hour metrics
+# Second Stage: Cleaning the dataset Note: refer to the measurements_data_exploratory_analysis.ipynb for cleaning steps
 def get_cleaned_dataset(df: DataFrame) -> DataFrame:
     try:
         if df.empty:
