@@ -67,7 +67,7 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
         df = concat([df, hourly_totals], axis=1)
         
         # Identify the hour with the highest grid_feedin of the day
-        df['max_grid_feedin_hour'] = df.groupby(df.index.date)['grid_feedin'].transform(lambda x: x == x.max())
+        df['max_grid_feedin_hour'] = df.groupby(df.index.floor('D'))['grid_feedin'].transform(lambda x: x == x.max())
         return df
     
     except Exception as e:
