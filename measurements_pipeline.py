@@ -15,7 +15,7 @@ def load_dataset(filename: str, delimiter: str = ';') -> DataFrame:
         print("❌ File not found")
         return DataFrame()
     except Exception as e:
-        print(f"❌ An error occurred while loading dataset", {str(e)})
+        print(f"❌ An error occurred while loading dataset: {str(e)}")
         return DataFrame()
 
 # Second Stage: Cleaning the dataset and adding hour metrics
@@ -49,7 +49,7 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
         df['direct_consumption_flag'] = df['direct_consumption'] > 0
         return df
     except Exception as e:
-        print(f"❌ An error occurred while cleaning", {str(e)})
+        print(f"❌ An error occurred while cleaning: {str(e)}")
         return df
 
 def add_hour_metrics(df: DataFrame) -> DataFrame:
@@ -73,7 +73,7 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
         return df
 
     except Exception as e:
-        print(f"❌ An error occurred while adding hour metrics", {str(e)})
+        print(f"❌ An error occurred while adding hour metrics: {str(e)}")
         return df
 
 # Third Stage: Exporting the cleaned dataset
@@ -85,7 +85,7 @@ def export_dataset(df: DataFrame, filename: str, delimiter: str = ',') -> None:
         df.to_csv(filename, sep=delimiter, index=True, encoding='utf-8')
         print(f"✅ Exported dataset with {df.shape[0]} rows and {df.shape[1]} columns.")
     except Exception as e:
-        print(f"❌ An error occurred while exporting", {str(e)})
+        print(f"❌ An error occurred while exporting: {str(e)}")
 
 # Fourth Stage: Scheduling the pipeline
 def load_dataset_job():
