@@ -121,19 +121,22 @@ def export_dataset_job():
         return
     export_dataset(measurements_data, 'cleaned_measurements.csv', ',')
 
+scheduler_instance = None
+
 def schedule_pipeline() -> None:
-    scheduler = BackgroundScheduler()
+    global scheduler_instance
     
-    if scheduler.get_jobs():
+    if scheduler_instance is not None:
         print("⚠️ Scheduler is already running. Skipping duplicate scheduling.")
         return
-
-    scheduler.add_job(load_dataset_job, 'interval', minutes=5, next_run_time=datetime.now())
-    scheduler.add_job(cleaned_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=10))
-    scheduler.add_job(add_hour_metrics_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=15))
-    scheduler.add_job(export_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=20))
     
-    scheduler.start()
+    scheduler_instance = BackgroundScheduler()
+    scheduler_instance.add_job(load_dataset_job, 'interval', minutes=5, next_run_time=datetime.now())
+    scheduler_instance.add_job(cleaned_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=10))
+    scheduler_instance.add_job(add_hour_metrics_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=15))
+    scheduler_instance.add_job(export_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=20))
+    
+    scheduler_instance.start()
     print("✅ Pipeline scheduler started.")
 
 # Run the pipeline
