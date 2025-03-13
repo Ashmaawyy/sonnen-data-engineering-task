@@ -18,7 +18,7 @@ def load_dataset(filename: str, delimiter: str = ';') -> DataFrame:
         print("❌ An error occurred", e)
         return DataFrame()
 
-# Second Stage: Cleaning the dataset
+# Second Stage: Cleaning the dataset and adding hour metrics
 def get_cleaned_dataset(df: DataFrame) -> DataFrame:
     try:
         if df.empty:
@@ -46,21 +46,34 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
 
         # Task #7: Add a flag column to indicate where direct_consumption is greater than zero
         df['direct_consumption_flag'] = df['direct_consumption'] > 0
-        
-        # Task #8: Calculate total grid_purchase and grid_feedin per hour
-        df['hour'] = df.index.hour
-        hourly_totals = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
-        hourly_totals.columns = [col +'_total' for col in hourly_totals.columns]
-        hourly_totals = df['hour'].map(hourly_totals.to_dict())
-        df = concat([df, hourly_totals], axis=1)
-        
-        # Task #9: Identify the hour with the highest grid_feedin of the day
-        df['max_grid_feedin_hour'] = df.groupby(df.index.date)['grid_feedin'].transform(lambda x: x == x.max())
-        
         return df
     except Exception as e:
         print("❌ An error occurred while cleaning", e)
         return df
+
+def add_hour_metrics(df: DataFrame) -> DataFrame:
+    try:
+        if df.empty:
+            print("⚠️ DataFrame is empty, skipping hour metrics.")
+            return df
+        
+        # Calculate total grid_purchase and grid_feedin per hour
+        df['hour'] = df.index.hour
+        hourly_totals = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
+        hourly_totals.columns = [col +'_total' for col in hourly_totals.columns]
+        hourly_totals = df['hour'].map(hourly_totals.to_dict())
+
+        # Concatenate the hourly totals to the original DataFrame
+        df = concat([df, hourly_totals], axis=1)
+        
+        # Identify the hour with the highest grid_feedin of the day
+        df['max_grid_feedin_hour'] = df.groupby(df.index.date)['grid_feedin'].transform(lambda x: x == x.max())
+        return df
+    
+    except Exception as e:
+        print("❌ An error occurred while adding hour metrics", e)
+        return df
+
 
 # Third Stage: Exporting the cleaned dataset
 def export_dataset(df: DataFrame, filename: str, delimiter: str = ',') -> None:
@@ -87,6 +100,13 @@ def cleaned_dataset_job():
     if not cleaned_data.empty:
         measurements_data = cleaned_data
 
+def add_hour_metrics_job():
+    global measurements_data
+    if measurements_data.empty:
+        print("⚠️ Skipping hour metrics: No data available.")
+        return
+    measurements_data = add_hour_metrics(measurements_data)
+
 def export_dataset_job():
     global measurements_data
     if measurements_data.empty:
@@ -103,6 +123,7 @@ def schedule_pipeline() -> None:
 
     scheduler.add_job(load_dataset_job, 'interval', minutes=5, next_run_time=datetime.now())
     scheduler.add_job(cleaned_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=10))
+    scheduler.add_job(add_hour_metrics_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=15))
     scheduler.add_job(export_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=20))
     
     scheduler.start()
