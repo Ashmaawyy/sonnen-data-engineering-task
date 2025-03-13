@@ -56,23 +56,32 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
         if df.empty:
             print("⚠️ DataFrame is empty, skipping hour metrics.")
             return df
-        
-        # Calculate total grid_purchase and grid_feedin per hour
-        df['hour'] = df.index.hour
-        hourly_totals = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
-        hourly_totals.columns = [col +'_total' for col in hourly_totals.columns]
-        hourly_totals = df['hour'].map(hourly_totals.to_dict())
 
-        # Concatenate the hourly totals to the original DataFrame
-        df = concat([df, hourly_totals], axis=1)
+        # Extract hour from timestamp
+        df['hour'] = df.index.hour
+
+        # Compute total grid_purchase and grid_feedin per hour
+        hourly_totals = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
+        hourly_totals.columns = [col + '_total' for col in hourly_totals.columns]
         
+        # Convert index to column to prevent index loss in merge
+        df = df.reset_index()
+        
+        # Merge and retain timestamp
+        df = df.merge(hourly_totals, on='hour', how='left')
+
+        # Restore timestamp as index
+        df = df.set_index('timestamp')
+
         # Identify the hour with the highest grid_feedin of the day
         df['max_grid_feedin_hour'] = df.groupby(df.index.floor('D'))['grid_feedin'].transform(lambda x: x == x.max())
+
         return df
-    
+
     except Exception as e:
         print("❌ An error occurred while adding hour metrics", e)
         return df
+
 
 
 # Third Stage: Exporting the cleaned dataset
@@ -98,14 +107,16 @@ def cleaned_dataset_job():
         return
     cleaned_data = get_cleaned_dataset(measurements_data)
     if not cleaned_data.empty:
-        measurements_data = cleaned_data
+        measurements_data.update(cleaned_data)
 
 def add_hour_metrics_job():
     global measurements_data
     if measurements_data.empty:
         print("⚠️ Skipping hour metrics: No data available.")
         return
-    measurements_data = add_hour_metrics(measurements_data)
+    hourly_metrics_data = add_hour_metrics(measurements_data)
+    if not hourly_metrics_data.empty:
+        measurements_data.update(hourly_metrics_data)
 
 def export_dataset_job():
     global measurements_data
