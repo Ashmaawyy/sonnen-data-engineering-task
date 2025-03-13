@@ -1,4 +1,4 @@
-from pandas import read_csv, DataFrame, to_datetime, to_numeric, concat
+from pandas import read_csv, DataFrame, to_datetime, to_numeric, concat, DatetimeIndex
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 import time
@@ -32,7 +32,7 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
         for col in ['grid_purchase', 'grid_feedin', 'direct_consumption']:
             df.loc[:, col] = to_numeric(df[col], errors='coerce').fillna(0).astype(int)
 
-        # Task #3: Remove the redundant date column if it exists
+        # Task #3: Remove the redundant date column
         df = df.drop(columns=['date'], errors='ignore')
 
         # Task #4: Convert the timestamp column to datetime
@@ -63,15 +63,14 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
 
         df['hour'] = df.index.hour
         
-        # Use cached hourly totals if available
-        if hourly_totals_cache is None:
-            hourly_totals_cache = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
-            hourly_totals_cache.columns = [col + '_total' for col in hourly_totals_cache.columns]
+        hourly_totals_cache = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
+        hourly_totals_cache.columns = [col + '_total' for col in hourly_totals_cache.columns]
+        hourly_totals_cache = hourly_totals_cache.reset_index(drop=True)
         
-        df = df.reset_index()
-        df = df.merge(hourly_totals_cache, on='hour', how='left')
-        df = df.set_index('timestamp')
+        df = df.merge(hourly_totals_cache, left_on='hour', right_index=True, how='left')
 
+        # Identify the hour with the maximum grid purchase and grid feed-in
+        df['max_grid_purchase_hour'] = df.groupby(df.index.floor('D'))['grid_purchase'].transform(lambda x: x == x.max())
         df['max_grid_feedin_hour'] = df.groupby(df.index.floor('D'))['grid_feedin'].transform(lambda x: x == x.max())
 
         return df
@@ -101,18 +100,14 @@ def cleaned_dataset_job():
     if measurements_data.empty:
         print("⚠️ Skipping cleaning: No data loaded yet.")
         return
-    cleaned_data = get_cleaned_dataset(measurements_data)
-    if not cleaned_data.empty:
-        measurements_data.combine_first(cleaned_data)
+    measurements_data = get_cleaned_dataset(measurements_data)
 
 def add_hour_metrics_job():
     global measurements_data
     if measurements_data.empty:
         print("⚠️ Skipping hour metrics: No data available.")
         return
-    hourly_metrics_data = add_hour_metrics(measurements_data)
-    if not hourly_metrics_data.empty:
-        measurements_data.combine_first(hourly_metrics_data)
+    measurements_data = add_hour_metrics(measurements_data)
 
 def export_dataset_job():
     global measurements_data
