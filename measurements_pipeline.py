@@ -152,10 +152,12 @@ def export_dataset(df: DataFrame, filename: str, delimiter: str = ',') -> None:
 
 # Fourth Stage: Scheduling the pipeline
 def load_dataset_job():
+    """Scheduled job to load dataset into global measurements_data."""
     global measurements_data
     measurements_data = load_dataset('measurements_coding_challenge.csv', ';')
 
 def get_cleaned_dataset_job():
+    """Scheduled job to clean global measurements_data in-place."""
     global measurements_data
     if measurements_data.empty:
         print("⚠️ Skipping cleaning: No data loaded yet.")
@@ -163,6 +165,11 @@ def get_cleaned_dataset_job():
     measurements_data = get_cleaned_dataset(measurements_data)
 
 def add_hour_metrics_job():
+    """Scheduled job to add hourly metrics to global measurements_data in-place.
+    
+    This job depends on the data being loaded and cleaned first. If the global
+    measurements_data is empty, the job will skip execution and log a warning.
+    """
     global measurements_data
     if measurements_data.empty:
         print("⚠️ Skipping hour metrics: No data available.")
@@ -171,6 +178,12 @@ def add_hour_metrics_job():
     measurements_data = add_hour_metrics(measurements_data)
 
 def export_dataset_job():
+    """Scheduled job to export global measurements_data to a CSV file.
+    
+    This job depends on the data being loaded, cleaned, and having metrics added.
+    If the global measurements_data is empty, the job will skip execution and
+    log a warning.
+    """
     global measurements_data
     if measurements_data.empty:
         print("⚠️ Skipping export: No data available.")
