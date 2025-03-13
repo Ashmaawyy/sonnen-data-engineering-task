@@ -7,6 +7,19 @@ measurements_data = DataFrame()
 
 # First Stage: Loading the dataset
 def load_dataset(filename: str, delimiter: str = ';') -> DataFrame:
+    """Load dataset from a CSV file.
+    
+    Args:
+        filename (str): Path to the CSV file to load
+        delimiter (str, optional): Column delimiter. Defaults to ';'.
+    
+    Returns:
+        DataFrame: Loaded DataFrame or empty DataFrame if error occurs
+    
+    Raises:
+        FileNotFoundError: If specified file doesn't exist
+        Exception: For other loading errors
+    """
     try:
         df = read_csv(filename, delimiter=delimiter)
         print(f"✅ Loaded dataset with {df.shape[0]} rows and {df.shape[1]} columns.")
@@ -23,6 +36,25 @@ def load_dataset(filename: str, delimiter: str = ';') -> DataFrame:
 
 # Second Stage: Cleaning the dataset Note: refer to the measurements_data_exploratory_analysis.ipynb for cleaning steps
 def get_cleaned_dataset(df: DataFrame) -> DataFrame:
+    """Clean and preprocess raw measurement data.
+    
+    Performs the following transformations:
+    1. Removes 'Dev test' rows
+    2. Converts numeric columns to integers
+    3. Removes redundant date column
+    4. Converts timestamp to DateTimeIndex
+    5. Handles missing/duplicate timestamps
+    6. Adds direct consumption flag
+    
+    Args:
+        df (DataFrame): Raw input DataFrame
+    
+    Returns:
+        DataFrame: Cleaned DataFrame with DateTimeIndex
+    
+    Raises:
+        Exception: If any cleaning operation fails
+    """
     try:
         if df.empty:
             print("⚠️ DataFrame is empty, skipping cleaning process.")
@@ -58,6 +90,21 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
         return df
 
 def add_hour_metrics(df: DataFrame) -> DataFrame:
+    """Add hourly aggregated metrics to DataFrame.
+    
+    Calculates:
+    - Hourly totals for grid purchase and feed-in
+    - Daily maximum purchase/feed-in hour flags
+    
+    Args:
+        df (DataFrame): Cleaned DataFrame with DateTimeIndex
+    
+    Returns:
+        DataFrame: DataFrame with added metrics columns
+    
+    Raises:
+        Exception: If metric calculation fails
+    """
     try:
         if df.empty:
             print("⚠️ DataFrame is empty, skipping hour metrics.")
@@ -83,6 +130,16 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
 
 # Third Stage: Exporting the cleaned dataset
 def export_dataset(df: DataFrame, filename: str, delimiter: str = ',') -> None:
+    """Export DataFrame to CSV file.
+    
+    Args:
+        df (DataFrame): Data to export
+        filename (str): Output file path
+        delimiter (str, optional): Column separator. Defaults to ','.
+    
+    Raises:
+        Exception: If export operation fails
+    """
     try:
         if df.empty:
             print("⚠️ No data to export.")
@@ -98,7 +155,7 @@ def load_dataset_job():
     global measurements_data
     measurements_data = load_dataset('measurements_coding_challenge.csv', ';')
 
-def cleaned_dataset_job():
+def get_cleaned_dataset_job():
     global measurements_data
     if measurements_data.empty:
         print("⚠️ Skipping cleaning: No data loaded yet.")
@@ -124,6 +181,16 @@ def export_dataset_job():
 scheduler_instance = None
 
 def schedule_pipeline() -> None:
+    """Initialize and start the scheduled pipeline jobs.
+    
+    Configures recurring jobs with 5-minute intervals:
+    - Load data (immediate start)
+    - Clean data (starts 10s after load)
+    - Add metrics (starts 15s after load)
+    - Export data (starts 20s after load)
+    
+    Prevents duplicate scheduler initialization.
+    """
     global scheduler_instance
     
     if scheduler_instance is not None:
@@ -132,7 +199,7 @@ def schedule_pipeline() -> None:
     
     scheduler_instance = BackgroundScheduler()
     scheduler_instance.add_job(load_dataset_job, 'interval', minutes=5, next_run_time=datetime.now())
-    scheduler_instance.add_job(cleaned_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=10))
+    scheduler_instance.add_job(get_cleaned_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=10))
     scheduler_instance.add_job(add_hour_metrics_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=15))
     scheduler_instance.add_job(export_dataset_job, 'interval', minutes=5, next_run_time=datetime.now() + timedelta(seconds=20))
     
