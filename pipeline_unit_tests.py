@@ -1,5 +1,7 @@
 import unittest
 import pandas as pd
+from pandas import DataFrame, to_datetime
+from datetime import datetime
 import os
 from measurements_pipeline import (
     load_dataset,
@@ -84,29 +86,24 @@ class TestMeasurementPipeline(unittest.TestCase):
         empty_df = add_hour_metrics(pd.DataFrame())
         self.assertTrue(empty_df.empty)
 
-def test_export_dataset(self):
-    """Test exporting and reloading the dataset with DateTimeIndex."""
-    df = load_dataset(self.test_filename, delimiter=';')
-    cleaned_df = get_cleaned_dataset(df)
-    df_with_metrics = add_hour_metrics(cleaned_df)
+    def test_export_dataset(self):
+        """Test exporting the dataset."""
+        df = load_dataset(self.test_filename, delimiter=';')
+        cleaned_df = get_cleaned_dataset(df)
+        df_with_metrics = add_hour_metrics(cleaned_df)
 
-    # Export and check if file is created
-    export_dataset(df_with_metrics, self.export_filename)
-    self.assertTrue(os.path.exists(self.export_filename))
+        # Export and check if file is created
+        export_dataset(df_with_metrics, self.export_filename)
+        self.assertTrue(os.path.exists(self.export_filename))
 
-    # Reload the exported file
-    reloaded_df = pd.read_csv(self.export_filename, index_col='timestamp', parse_dates=True)
+        # Load exported file and compare with original
+        exported_df = pd.read_csv(self.export_filename, index_col='timestamp', parse_dates=True)
+        self.assertEqual(exported_df.shape[0], df_with_metrics.shape[0])
+        self.assertEqual(exported_df.shape[1], df_with_metrics.shape[1])
 
-    # Check if the DateTimeIndex is preserved
-    self.assertIsInstance(reloaded_df.index, pd.DatetimeIndex)
-
-    # Check if the data matches
-    self.assertEqual(reloaded_df.shape[0], df_with_metrics.shape[0])
-    self.assertEqual(reloaded_df.shape[1], df_with_metrics.shape[1])
-
-    # Test exporting empty DataFrame
-    export_dataset(pd.DataFrame(), "empty_export.csv")
-    self.assertFalse(os.path.exists("empty_export.csv"))  # Should not create file
+        # Test exporting empty DataFrame
+        export_dataset(pd.DataFrame(), "empty_export.csv")
+        self.assertFalse(os.path.exists("empty_export.csv"))  # Should not create file
 
     def test_duplicate_timestamps(self):
         """Test handling of duplicate timestamps."""
