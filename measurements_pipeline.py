@@ -38,7 +38,8 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
         # Task #4: Convert the timestamp column to datetime
         df['timestamp'] = to_datetime(df['timestamp'], errors='coerce')
 
-        # Task #5: Drop rows where timestamp is missing before setting as index
+        # Task #5: Drop rows where timestamp is missing and remove duplicates before setting as index
+        df = df[~df.index.duplicated(keep='first')]
         df = df.dropna(subset=['timestamp']).set_index('timestamp')
 
         # Task #6: Replace null values in selected columns with 0
@@ -51,11 +52,7 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
         print("❌ An error occurred while cleaning", e)
         return df
 
-hourly_totals_cache = None
-
 def add_hour_metrics(df: DataFrame) -> DataFrame:
-    global hourly_totals_cache
-    
     try:
         if df.empty:
             print("⚠️ DataFrame is empty, skipping hour metrics.")
@@ -63,10 +60,11 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
 
         df['hour'] = df.index.hour
         
-        hourly_totals_cache = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
-        hourly_totals_cache.columns = [col + '_total' for col in hourly_totals_cache.columns]
+        hourly_totals = df.groupby('hour')[['grid_purchase', 'grid_feedin']].sum()
+        hourly_totals.columns = [col + '_total' for col in hourly_totals.columns]
         
-        df = df.join(hourly_totals_cache, on='hour', how='left')
+        df = df.join(hourly_totals, on='hour', how='left')
+        df = df.drop(columns=['hour'])
 
         # Identify the hour with the maximum grid purchase and grid feed-in
         df['max_grid_purchase_hour'] = df.groupby(df.index.floor('D'))['grid_purchase'].transform(lambda x: x == x.max())
