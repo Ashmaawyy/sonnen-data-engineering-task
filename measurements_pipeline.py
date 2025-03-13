@@ -15,7 +15,7 @@ def load_dataset(filename: str, delimiter: str = ';') -> DataFrame:
         print("❌ File not found")
         return DataFrame()
     except Exception as e:
-        print("❌ An error occurred", e)
+        print(f"❌ An error occurred while loading dataset", {str(e)})
         return DataFrame()
 
 # Second Stage: Cleaning the dataset and adding hour metrics
@@ -38,9 +38,9 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
         # Task #4: Convert the timestamp column to datetime
         df['timestamp'] = to_datetime(df['timestamp'], errors='coerce')
 
-        # Task #5: Drop rows where timestamp is missing and remove duplicates before setting as index
-        df = df[~df.index.duplicated(keep='first')]
+        # Task #5: Drop rows where timestamp is missing before setting as index
         df = df.dropna(subset=['timestamp']).set_index('timestamp')
+        df = df[~df.index.duplicated(keep='first')]  # Remove duplicate timestamps
 
         # Task #6: Replace null values in selected columns with 0
         df.loc[:, ['grid_purchase', 'grid_feedin']] = df[['grid_purchase', 'grid_feedin']].fillna(0).copy()
@@ -49,7 +49,7 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
         df['direct_consumption_flag'] = df['direct_consumption'] > 0
         return df
     except Exception as e:
-        print("❌ An error occurred while cleaning", e)
+        print(f"❌ An error occurred while cleaning", {str(e)})
         return df
 
 def add_hour_metrics(df: DataFrame) -> DataFrame:
@@ -73,7 +73,7 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
         return df
 
     except Exception as e:
-        print("❌ An error occurred while adding hour metrics", e)
+        print(f"❌ An error occurred while adding hour metrics", {str(e)})
         return df
 
 # Third Stage: Exporting the cleaned dataset
@@ -85,7 +85,7 @@ def export_dataset(df: DataFrame, filename: str, delimiter: str = ',') -> None:
         df.to_csv(filename, sep=delimiter, index=True, encoding='utf-8')
         print(f"✅ Exported dataset with {df.shape[0]} rows and {df.shape[1]} columns.")
     except Exception as e:
-        print("❌ An error occurred while exporting", e)
+        print(f"❌ An error occurred while exporting", {str(e)})
 
 # Fourth Stage: Scheduling the pipeline
 def load_dataset_job():
