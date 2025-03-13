@@ -2,7 +2,10 @@ from pandas import read_csv, DataFrame, to_datetime, to_numeric, concat, Datetim
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 import time
+import logging
+import atexit
 
+logging.basicConfig(filename='pipeline.log', level=logging.ERROR)
 measurements_data = DataFrame()
 
 # First Stage: Loading the dataset
@@ -59,6 +62,11 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
         if df.empty:
             print("⚠️ DataFrame is empty, skipping cleaning process.")
             return df
+        
+        required_columns = ['timestamp', 'grid_purchase', 'grid_feedin', 'direct_consumption']
+        if not all(col in df.columns for col in required_columns):
+            print("❌ Missing required columns in dataset.")
+            return DataFrame()
 
         # Task #1: Remove the Dev test rows
         df = df[df['direct_consumption'] != 'Dev test']
@@ -218,6 +226,9 @@ def schedule_pipeline() -> None:
     
     scheduler_instance.start()
     print("✅ Pipeline scheduler started.")
+
+    # Shut down the scheduler when exiting the script
+    atexit.register(lambda: scheduler_instance.shutdown())
 
 # Run the pipeline
 if __name__ == '__main__':
