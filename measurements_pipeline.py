@@ -41,7 +41,7 @@ def get_cleaned_dataset(df: DataFrame) -> DataFrame:
     """Clean and preprocess raw measurement data."""
     try:
         if df.empty:
-            logger.warning("⚠️ DataFrame is empty, skipping cleaning process.")
+            logger.warning("⚠️  DataFrame is empty, skipping cleaning process.")
             return df
         
         required_columns = ['timestamp', 'grid_purchase', 'grid_feedin', 'direct_consumption']
@@ -82,7 +82,7 @@ def add_hour_metrics(df: DataFrame) -> DataFrame:
     """Add hourly aggregated metrics to DataFrame."""
     try:
         if df.empty:
-            logger.warning("⚠️ DataFrame is empty, skipping hour metrics.")
+            logger.warning("⚠️  DataFrame is empty, skipping hour metrics.")
             return df
 
         df['hour'] = df.index.hour
@@ -107,7 +107,7 @@ def export_dataset(df: DataFrame, filename: str, delimiter: str = ',') -> None:
     """Export DataFrame to CSV file."""
     try:
         if df.empty:
-            logger.warning("⚠️ No data to export.")
+            logger.warning("⚠️  No data to export.")
             return
         df.to_csv(filename, sep=delimiter, index=True, encoding='utf-8')
         logger.info("✅ Exported dataset with %s rows and %s columns.", df.shape[0], df.shape[1])
@@ -125,7 +125,7 @@ def get_cleaned_dataset_job():
     """Scheduled job to clean global measurements_data in-place."""
     global measurements_data
     if measurements_data.empty:
-        logger.warning("⚠️ Skipping cleaning: No data loaded yet.")
+        logger.warning("⚠️  Skipping cleaning: No data loaded yet.")
         return
     measurements_data = get_cleaned_dataset(measurements_data)
 
@@ -133,7 +133,7 @@ def add_hour_metrics_job():
     """Scheduled job to add hourly metrics to global measurements_data in-place."""
     global measurements_data
     if measurements_data.empty:
-        logger.warning("⚠️ Skipping hour metrics: No data available.")
+        logger.warning("⚠️  Skipping hour metrics: No data available.")
         return
     measurements_data = add_hour_metrics(measurements_data)
 
@@ -141,7 +141,7 @@ def export_dataset_job():
     """Scheduled job to export global measurements_data to a CSV file."""
     global measurements_data
     if measurements_data.empty:
-        logger.warning("⚠️ Skipping export: No data available.")
+        logger.warning("⚠️  Skipping export: No data available.")
         return
     export_dataset(measurements_data, 'cleaned_measurements.csv', ',')
 
@@ -151,7 +151,7 @@ def schedule_pipeline() -> None:
     """Initialize and start the scheduled pipeline jobs."""
     global scheduler_instance
     if scheduler_instance is not None:
-        logger.warning("⚠️ Scheduler is already running. Skipping duplicate scheduling.")
+        logger.warning("⚠️  Scheduler is already running. Skipping duplicate scheduling.")
         return
 
     scheduler_instance = BackgroundScheduler()
