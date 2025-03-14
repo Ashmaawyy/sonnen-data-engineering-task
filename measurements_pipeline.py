@@ -1,7 +1,7 @@
-import logging
 from pandas import read_csv, DataFrame, to_datetime, to_numeric
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
+import logging
 import time
 import atexit
 
